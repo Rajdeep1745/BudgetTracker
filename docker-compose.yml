@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: budget_tracker
+      POSTGRES_USER: budget
+      POSTGRES_PASSWORD: budget
+    ports: ["5432:5432"]
+    volumes:
+      [
+        "postgres_data:/var/lib/postgresql/data",
+        "./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro",
+      ]
+  api:
+    build: ./backend
+    environment:
+      PORT: 3101
+      DATABASE_URL: postgresql://budget:budget@db:5432/budget_tracker
+      CORS_ORIGIN: http://localhost:3100
+    ports: ["3101:3101"]
+    depends_on: [db]
+  web:
+    build: ./frontend
+    environment: { NEXT_PUBLIC_API_URL: http://localhost:3101/api }
+    ports: ["3100:3100"]
+    depends_on: [api]
+volumes: { postgres_data: {} }
