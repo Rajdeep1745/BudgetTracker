@@ -1,7 +1,6 @@
 export default function MoneyField({
   id,
   label,
-  hint,
   value,
   onChange,
   currency,
@@ -9,7 +8,6 @@ export default function MoneyField({
 }: {
   id: string;
   label: string;
-  hint?: string;
   value: string;
   onChange: (value: string) => void;
   currency: string;
@@ -30,7 +28,6 @@ export default function MoneyField({
           onChange={(event) => onChange(event.target.value)}
         />
       </div>
-      {hint && <small className="field-hint">{hint}</small>}
     </div>
   );
 }

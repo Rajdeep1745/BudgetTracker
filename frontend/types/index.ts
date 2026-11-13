@@ -18,14 +18,28 @@ export type BudgetGroup = {
   percent: number;
 };
 
+export type FixedCostType = {
+  id: string;
+  name: string;
+};
+
+export type BudgetFixedCost = FixedCostType & {
+  amount: number;
+};
+
+export type BudgetFixedCostInput = FixedCostType & {
+  amount: string;
+};
+
 export type DashboardData = {
   month: string;
   totals: { budget: number; spent: number; remaining: number };
   budget: {
     allowance: number;
-    rent: number;
-    didiFees: number;
+    fixedCosts: BudgetFixedCost[];
+    fixedCostTotal: number;
     carryIn: number;
+    carryInEnabled: boolean;
     alreadySaved: number;
     savingsTarget: number;
     effectiveAllowance: number;

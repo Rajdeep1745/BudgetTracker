@@ -17,8 +17,11 @@ import SettingsTab from "../settings/SettingsTab";
 import { apiRequest } from "../../lib/api";
 import { localToday } from "../../lib/format";
 import { openPickerFromLabel } from "../../lib/openPickerFromLabel";
+import { useToast } from "../../components/ToastProvider";
 import type {
+  BudgetFixedCostInput,
   DashboardData,
+  FixedCostType,
   GroupName,
   Tab,
   Transaction,
@@ -60,18 +63,22 @@ export default function HomePage() {
     sortBy: "date",
     sortDirection: "desc",
   });
-  const [message, setMessage] = useState("");
+  const { showToast } = useToast();
   const [currency, setCurrency] = useState("INR");
   const [alertThreshold, setAlertThreshold] = useState(80);
   const [allowanceInput, setAllowanceInput] = useState("");
-  const [rentInput, setRentInput] = useState("");
-  const [didiFeesInput, setDidiFeesInput] = useState("");
+  const [fixedCostsInput, setFixedCostsInput] = useState<
+    BudgetFixedCostInput[]
+  >([]);
   const [carryInInput, setCarryInInput] = useState("0");
   const [alreadySavedInput, setAlreadySavedInput] = useState("");
   const [savingsTargetInput, setSavingsTargetInput] = useState("");
   const [personalPercent, setPersonalPercent] = useState(40);
-  const [budgetSaved, setBudgetSaved] = useState(false);
   const [dismissedAlertMonth, setDismissedAlertMonth] = useState("");
+  const [fixedCostTypes, setFixedCostTypes] = useState<FixedCostType[]>([]);
+  const [fixedCostName, setFixedCostName] = useState("");
+  const [settingsCarryInEnabled, setSettingsCarryInEnabled] = useState(true);
+  const [isSavingCarryIn, setIsSavingCarryIn] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryGroup, setNewCategoryGroup] = useState<GroupName>("Personal");
   const [form, setForm] = useState<TransactionFormValues>({
@@ -99,8 +106,12 @@ export default function HomePage() {
       const dashboard: DashboardData = await response.json();
       setData(dashboard);
       setAllowanceInput(String(dashboard.budget.allowance));
-      setRentInput(String(dashboard.budget.rent));
-      setDidiFeesInput(String(dashboard.budget.didiFees));
+      setFixedCostsInput(
+        dashboard.budget.fixedCosts.map((cost) => ({
+          ...cost,
+          amount: String(cost.amount),
+        })),
+      );
       setCarryInInput(String(dashboard.budget.carryIn));
       setAlreadySavedInput(String(dashboard.budget.alreadySaved));
       setSavingsTargetInput(String(dashboard.budget.savingsTarget));
@@ -110,15 +121,33 @@ export default function HomePage() {
         categoryId: value.categoryId || dashboard.categories[0]?.id || "",
       }));
     } catch (error) {
-      setMessage(
+      showToast(
         error instanceof Error
           ? error instanceof TypeError
             ? `${error.message} Check that PostgreSQL and the backend are running.`
             : error.message
           : "Could not load your budget data.",
+        "error",
       );
     }
-  }, [month]);
+  }, [month, showToast]);
+
+  const loadSettings = useCallback(async () => {
+    try {
+      const response = await apiRequest(`/settings?month=${currentMonth}`);
+      const settings: {
+        fixedCosts: FixedCostType[];
+        carryInEnabled: boolean;
+      } = await response.json();
+      setFixedCostTypes(settings.fixedCosts);
+      setSettingsCarryInEnabled(settings.carryInEnabled);
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not load settings.",
+        "error",
+      );
+    }
+  }, [showToast]);
 
   const loadTransactions = useCallback(
     async (requestedPage = transactionPage) => {
@@ -150,12 +179,13 @@ export default function HomePage() {
         setTransactions(result.items);
         setTransactionTotal(result.total);
       } catch (error) {
-        setMessage(
+        showToast(
           error instanceof Error ? error.message : "Could not load transactions.",
+          "error",
         );
       }
     },
-    [month, transactionPage, transactionFilters, transactionSort],
+    [month, transactionPage, transactionFilters, transactionSort, showToast],
   );
 
   const refresh = async (requestedPage = transactionPage) => {
@@ -165,6 +195,10 @@ export default function HomePage() {
   useEffect(() => {
     void loadDashboard();
   }, [loadDashboard]);
+
+  useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
 
   useEffect(() => {
     const timeout = window.setTimeout(
@@ -195,7 +229,6 @@ export default function HomePage() {
 
   const submitTransaction = async (event: React.FormEvent) => {
     event.preventDefault();
-    setMessage("");
     try {
       await apiRequest("/transactions", {
         method: "POST",
@@ -210,17 +243,17 @@ export default function HomePage() {
       }));
       await refresh(1);
       setTransactionPage(1);
+      showToast("Transaction added.");
     } catch (error) {
-      setMessage(
+      showToast(
         error instanceof Error ? error.message : "Could not save this transaction.",
+        "error",
       );
     }
   };
 
   const saveBudget = async (event: React.FormEvent) => {
     event.preventDefault();
-    setMessage("");
-    setBudgetSaved(false);
     try {
       await apiRequest("/budgets", {
         method: "PUT",
@@ -229,18 +262,23 @@ export default function HomePage() {
           month,
           allowance: Number(allowanceInput),
           personalPercent,
-          rent: Number(rentInput),
-          didiFees: Number(didiFeesInput),
+          fixedCosts: fixedCostsInput.map((cost) => ({
+            id: cost.id,
+            amount: Number(cost.amount),
+          })),
           carryIn: Number(carryInInput),
+          carryInEnabled:
+            data?.budget.carryInEnabled ?? settingsCarryInEnabled,
           alreadySaved: Number(alreadySavedInput),
           savingsTarget: Number(savingsTargetInput),
         }),
       });
       await loadDashboard();
-      setBudgetSaved(true);
+      showToast("Budget saved.");
     } catch (error) {
-      setMessage(
+      showToast(
         error instanceof Error ? error.message : "Could not update this budget.",
+        "error",
       );
     }
   };
@@ -249,11 +287,13 @@ export default function HomePage() {
     try {
       await apiRequest(`/transactions/${id}`, { method: "DELETE" });
       await refresh();
+      showToast("Transaction deleted.");
     } catch (error) {
-      setMessage(
+      showToast(
         error instanceof Error
           ? error.message
           : "Could not delete this transaction.",
+        "error",
       );
     }
   };
@@ -268,14 +308,15 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(transaction),
       });
-      setMessage("");
       await refresh();
+      showToast("Transaction updated.");
       return true;
     } catch (error) {
-      setMessage(
+      showToast(
         error instanceof Error
           ? error.message
           : "Could not update this transaction.",
+        "error",
       );
       return false;
     }
@@ -283,7 +324,6 @@ export default function HomePage() {
 
   const addCategory = async (event: React.FormEvent) => {
     event.preventDefault();
-    setMessage("");
     try {
       await apiRequest("/categories", {
         method: "POST",
@@ -295,11 +335,83 @@ export default function HomePage() {
       });
       setNewCategoryName("");
       await loadDashboard();
+      showToast("Category added.");
     } catch (error) {
-      setMessage(
+      showToast(
         error instanceof Error ? error.message : "Could not add this category.",
+        "error",
       );
     }
+  };
+
+  const addFixedCost = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      await apiRequest("/settings/fixed-costs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fixedCostName,
+          effectiveMonth: currentMonth,
+        }),
+      });
+      setFixedCostName("");
+      await Promise.all([loadSettings(), loadDashboard()]);
+      showToast("Fixed cost added.");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not add this fixed cost.",
+        "error",
+      );
+    }
+  };
+
+  const deleteFixedCost = async (id: string) => {
+    try {
+      await apiRequest(
+        `/settings/fixed-costs/${id}?month=${currentMonth}`,
+        { method: "DELETE" },
+      );
+      await Promise.all([loadSettings(), loadDashboard()]);
+      showToast("Fixed cost deleted. Past months are unchanged.");
+      return true;
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Could not delete this fixed cost.",
+        "error",
+      );
+      return false;
+    }
+  };
+
+  const updateCarryInSetting = async (enabled: boolean) => {
+    setIsSavingCarryIn(true);
+    try {
+      await apiRequest("/settings/carry-in", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled, effectiveMonth: currentMonth }),
+      });
+      await Promise.all([loadSettings(), loadDashboard()]);
+      showToast(`Carry in ${enabled ? "enabled" : "disabled"}.`);
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Could not update the carry-in setting.",
+        "error",
+      );
+    } finally {
+      setIsSavingCarryIn(false);
+    }
+  };
+
+  const changeFixedCostAmount = (id: string, amount: string) => {
+    setFixedCostsInput((current) =>
+      current.map((cost) => (cost.id === id ? { ...cost, amount } : cost)),
+    );
   };
 
   const applyTransactionFilters = (filters: TransactionFilters) => {
@@ -406,7 +518,6 @@ export default function HomePage() {
         </header>
 
         <div className="page-content">
-          {message && <div className="notice" role="alert">{message}</div>}
           {tab === "Dashboard" && (
             <DashboardTab
               data={data}
@@ -430,19 +541,19 @@ export default function HomePage() {
               currency={currency}
               allowanceInput={allowanceInput}
               setAllowanceInput={setAllowanceInput}
-              rentInput={rentInput}
-              setRentInput={setRentInput}
-              didiFeesInput={didiFeesInput}
-              setDidiFeesInput={setDidiFeesInput}
+              fixedCosts={fixedCostsInput}
+              onFixedCostChange={changeFixedCostAmount}
               carryInInput={carryInInput}
               setCarryInInput={setCarryInInput}
+              carryInEnabled={
+                data?.budget.carryInEnabled ?? settingsCarryInEnabled
+              }
               alreadySavedInput={alreadySavedInput}
               setAlreadySavedInput={setAlreadySavedInput}
               savingsTargetInput={savingsTargetInput}
               setSavingsTargetInput={setSavingsTargetInput}
               personalPercent={personalPercent}
               setPersonalPercent={setPersonalPercent}
-              budgetSaved={budgetSaved}
               groups={data?.groups ?? []}
               formatMoney={formatMoney}
               onSave={saveBudget}
@@ -471,6 +582,14 @@ export default function HomePage() {
               categoryGroup={newCategoryGroup}
               onCategoryGroupChange={setNewCategoryGroup}
               onAddCategory={addCategory}
+              fixedCostTypes={fixedCostTypes}
+              fixedCostName={fixedCostName}
+              onFixedCostNameChange={setFixedCostName}
+              onAddFixedCost={addFixedCost}
+              onDeleteFixedCost={deleteFixedCost}
+              carryInEnabled={settingsCarryInEnabled}
+              onCarryInEnabledChange={updateCarryInSetting}
+              isSavingCarryIn={isSavingCarryIn}
             />
           )}
         </div>

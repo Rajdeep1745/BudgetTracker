@@ -15,23 +15,55 @@ export async function getDashboard(month) {
     [toMonth(month)],
   );
   const budgetResult = await pool.query(
-    `SELECT total_amount, personal_percent, rent, didi_fees, carry_in,
+    `SELECT total_amount, personal_percent, carry_in, carry_in_enabled,
       savings_target
      FROM monthly_budgets WHERE month = $1::date`,
     [toMonth(month)],
   );
   const settingsResult = await pool.query(
-    "SELECT total_saved FROM app_settings WHERE id = 1",
+    "SELECT total_saved, carry_in_enabled FROM app_settings WHERE id = 1",
+  );
+  const fixedCostsResult = await pool.query(
+    `SELECT fixed_cost_type_id AS id, name_snapshot AS name,
+       amount::float AS amount
+     FROM monthly_budget_fixed_costs
+     WHERE monthly_budget_id = (
+       SELECT id FROM monthly_budgets WHERE month = $1::date
+     )
+     UNION ALL
+     SELECT types.id, types.name, 0::float AS amount
+     FROM budget_fixed_cost_types AS types
+     WHERE types.created_month <= $1::date
+       AND (types.archived_month IS NULL OR types.archived_month > $1::date)
+       AND NOT EXISTS (
+         SELECT 1
+         FROM monthly_budget_fixed_costs AS saved_costs
+         JOIN monthly_budgets AS saved_budget
+           ON saved_budget.id = saved_costs.monthly_budget_id
+         WHERE saved_budget.month = $1::date
+           AND saved_costs.fixed_cost_type_id = types.id
+       )
+     ORDER BY name`,
+    [toMonth(month)],
   );
   const budget = budgetResult.rows[0];
   const totalSaved = Number(settingsResult.rows[0]?.total_saved ?? 0);
+  const fixedCosts = fixedCostsResult.rows.map((cost) => ({
+    ...cost,
+    amount: Number(cost.amount),
+  }));
+  const fixedCostTotal = fixedCosts.reduce((total, cost) => total + cost.amount, 0);
   const allowance = Number(budget?.total_amount ?? 0);
   const personalPercent = Number(budget?.personal_percent ?? 40);
-  const rent = Number(budget?.rent ?? 0);
-  const didiFees = Number(budget?.didi_fees ?? 0);
   const carryIn = Number(budget?.carry_in ?? 0);
+  const carryInEnabled = Boolean(
+    budget?.carry_in_enabled ??
+      settingsResult.rows[0]?.carry_in_enabled ??
+      true,
+  );
   const savingsTarget = Number(budget?.savings_target ?? 0);
-  const effectiveAllowance = allowance - rent - didiFees + carryIn;
+  const effectiveAllowance =
+    allowance - fixedCostTotal + (carryInEnabled ? carryIn : 0);
   const spendableBudget = effectiveAllowance - savingsTarget;
   const allocationBase = Math.max(spendableBudget, 0);
   const spentByGroup = rows.reduce(
@@ -87,9 +119,10 @@ export async function getDashboard(month) {
     },
     budget: {
       allowance,
-      rent,
-      didiFees,
+      fixedCosts,
+      fixedCostTotal,
       carryIn,
+      carryInEnabled,
       alreadySaved: totalSaved,
       savingsTarget,
       effectiveAllowance,

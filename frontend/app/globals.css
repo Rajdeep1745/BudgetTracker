@@ -822,6 +822,80 @@ button {
   color: var(--color-danger);
   font-size: var(--font-size-sm);
 }
+.global-toast-region {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 20;
+  display: grid;
+  width: min(390px, calc(100vw - 36px));
+  gap: 10px;
+  pointer-events: none;
+}
+.global-toast {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) 24px;
+  align-items: start;
+  gap: 10px;
+  border: 1px solid var(--color-success-soft);
+  border-radius: 11px;
+  background: var(--color-surface);
+  padding: 13px;
+  color: var(--color-success);
+  box-shadow: 0 8px 26px var(--color-shadow);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-copy);
+  pointer-events: auto;
+  animation: global-toast-in 240ms ease-out both;
+}
+.global-toast-error {
+  border-color: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+.global-toast-info {
+  border-color: var(--color-border);
+  color: var(--color-primary);
+}
+.global-toast.is-exiting {
+  animation: global-toast-out 240ms ease-in both;
+}
+.global-toast button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  background: var(--color-transparent);
+  padding: 0;
+  color: var(--color-text-muted);
+}
+.global-toast button:hover {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+}
+@keyframes global-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes global-toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .global-toast,
+  .global-toast.is-exiting {
+    animation-duration: 1ms;
+  }
+}
 .alert-notice {
   display: flex;
   align-items: center;
@@ -921,6 +995,27 @@ button {
   gap: 12px;
   margin-top: 11px;
 }
+.fixed-cost-input-section {
+  margin-top: 18px;
+}
+.fixed-cost-input-heading h3 {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+.fixed-cost-input-heading p {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+.budget-input-grid.fixed-cost-input-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 10px;
+}
+.carry-in-input {
+  margin-top: 14px;
+}
 .compact-money-input {
   height: 42px;
   gap: 7px;
@@ -933,12 +1028,6 @@ button {
   height: 38px;
   min-width: 0;
   font-size: var(--font-size-sm);
-}
-.field-hint {
-  display: block;
-  margin-top: 5px;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
 }
 .savings-panel {
   margin-top: 16px;
@@ -1416,6 +1505,133 @@ button {
   max-width: 850px;
   gap: 13px;
 }
+.fixed-cost-settings {
+  padding: 19px;
+}
+.fixed-cost-settings .card-heading {
+  margin-bottom: 13px;
+}
+.fixed-cost-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+.fixed-cost-form label {
+  display: grid;
+  gap: 5px;
+}
+.fixed-cost-form input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  outline: 0;
+  background: var(--color-surface);
+  padding: 0 10px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+.fixed-cost-form input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-highlight);
+}
+.fixed-cost-form .primary-button {
+  width: auto;
+  min-width: 155px;
+  margin: 0;
+}
+.fixed-cost-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.fixed-cost-row {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--color-surface-muted);
+  border-radius: 8px;
+  padding: 7px 10px 7px 13px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+.fixed-cost-delete {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-transparent);
+  color: var(--color-text-muted);
+}
+.fixed-cost-delete:hover {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+.fixed-cost-empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+.fixed-cost-list .fixed-cost-empty {
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.setting-toggle {
+  position: relative;
+  display: inline-flex;
+  width: 46px;
+  height: 26px;
+  flex: 0 0 46px;
+  cursor: pointer;
+}
+.setting-toggle input {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+.setting-toggle > span {
+  width: 46px;
+  height: 26px;
+  border-radius: 20px;
+  background: var(--color-border);
+  transition: background-color 160ms ease;
+}
+.setting-toggle > span::after {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  content: "";
+  transition: transform 160ms ease;
+}
+.setting-toggle input:checked + span {
+  background: var(--color-primary);
+}
+.setting-toggle input:checked + span::after {
+  transform: translateX(20px);
+}
+.setting-toggle input:focus-visible + span {
+  outline: 3px solid var(--color-highlight);
+  outline-offset: 2px;
+}
+.setting-toggle input:disabled {
+  cursor: wait;
+}
 .setting-row {
   display: flex;
   align-items: center;
@@ -1622,6 +1838,11 @@ button {
   }
 }
 @media (max-width: 560px) {
+  .global-toast-region {
+    top: 10px;
+    right: 10px;
+    width: calc(100vw - 20px);
+  }
   .topbar {
     padding: 0 15px;
   }
@@ -1731,6 +1952,9 @@ button {
     grid-template-columns: 1fr;
     gap: 3px;
   }
+  .budget-input-grid.fixed-cost-input-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .savings-inputs {
     grid-template-columns: 1fr;
   }
@@ -1778,6 +2002,17 @@ button {
   .category-editor-fields .primary-button {
     width: 100%;
     margin-top: 8px;
+  }
+  .fixed-cost-form {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .fixed-cost-form .primary-button {
+    width: 100%;
+    margin-top: 4px;
+  }
+  .budget-input-grid.fixed-cost-input-grid {
+    grid-template-columns: 1fr;
   }
   .category-row {
     grid-template-columns: 9px minmax(85px, 0.75fr) minmax(35px, 1fr) minmax(

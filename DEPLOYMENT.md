@@ -1,6 +1,6 @@
 # Deploy PocketPlan
 
-This deployment uses:
+Production deployment uses:
 
 - **Vercel** for the Next.js frontend.
 - **Render** for the Express API, configured by the repository's `render.yaml`.
@@ -21,16 +21,28 @@ git push -u origin main
 
 Do not upload `.env` files, passwords, database URLs, or other credentials. The root `.gitignore` excludes local environment files while allowing the `.env.example` templates.
 
-## 1. Create the shared database
+## Local development database
+
+Use a local PostgreSQL instance for development. Set `DATABASE_URL` in `backend/.env` to that local instance; the backend rejects remote database hosts outside production and does not read the root `.env.local`. The root `.env.local` may contain production credentials and must not be used by local development.
+
+For a fresh local database, run `database/init.sql`. To upgrade an existing local database, run the versioned migrations in order:
+
+1. `database/V1__budget_plan.sql`
+2. `database/V2__flexible_budget_costs.sql`
+3. `database/V3__transaction_browsing.sql`
+
+The migration scripts are safe to rerun. V2 depends on the budget columns introduced by V1; V3 adds indexes for the existing transactions table.
+
+## 1. Create the production database
 
 1. Create a PostgreSQL project on Neon.
 2. Copy the pooled connection string from the Neon console. Keep it secret.
 3. For a new, empty database, run `database/init.sql` using Neon's SQL Editor.
-4. For an existing PocketPlan database, back it up and run the migration files it needs instead of `init.sql`. Run `database/migrate-budget-plan.sql` only if the existing database is missing those budget columns/settings, then run `database/migrate-transaction-browsing.sql` to add the transaction-list indexes. The latter only adds indexes; it does not change or delete transaction, category, or budget data.
+4. For an existing PocketPlan database, back it up and run the applicable versioned migrations instead of `init.sql`, before deploying the updated API. Run `V1`, `V2`, and `V3` in order when upgrading from the original schema. V1 adds budget plan fields, V2 converts Rent and Didi fees into configurable fixed costs and adds the carry-in toggle while preserving saved amounts and past-month values, and V3 adds transaction indexes. If a migration version is already present in the database, do not rerun it solely because a new app version was deployed.
 
 The hosting setup does not copy an existing local database into Neon. Export/import your current database separately if you need to keep its transactions and budget data.
 
-Pushing code to GitHub redeploys the Vercel frontend and Render API, but it does **not** apply SQL to Neon. Run each required migration manually against the production database, after taking a backup. For Neon migrations, use the direct (non-pooled) database connection; the hostname should not contain `-pooler`. These recent/category/amount indexes are also included in `database/init.sql` for fresh installations.
+Pushing code to GitHub redeploys the Vercel frontend and Render API, but it does **not** apply SQL to Neon. Migrations should be tested against the local PostgreSQL database first; only when deploying a schema-dependent release, apply the same required migration versions to Neon production after taking a backup. Use Neon's SQL Editor or a direct (non-pooled) connection for production migrations; do not use the pooled app connection. These indexes and flexible-budget tables are also included in `database/init.sql` for fresh installations.
 
 ## 2. Deploy the API on Render
 
@@ -60,7 +72,7 @@ If you used the temporary CORS origin, update Render's `CORS_ORIGIN` to the Verc
 
 ## Local environment files
 
-- Backend: copy `backend/.env.example` to `backend/.env`, then set `DATABASE_URL` and local `CORS_ORIGIN`.
+- Backend: copy `backend/.env.example` to `backend/.env`, then set `DATABASE_URL` to local PostgreSQL and `CORS_ORIGIN` to the local frontend origin.
 - Frontend: copy `frontend/.env.example` to `frontend/.env.local` only if you need a non-default local API URL.
 
 Keep those local files out of Git. Configure production values in the Render and Vercel dashboards, not in the repository.

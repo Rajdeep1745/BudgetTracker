@@ -1,3 +1,5 @@
+BEGIN;
+
 ALTER TABLE monthly_budgets
   ADD COLUMN IF NOT EXISTS rent NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (rent >= 0),
   ADD COLUMN IF NOT EXISTS didi_fees NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (didi_fees >= 0),
@@ -10,3 +12,5 @@ CREATE TABLE IF NOT EXISTS app_settings (
 );
 
 INSERT INTO app_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+COMMIT;

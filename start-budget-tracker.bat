@@ -14,9 +14,9 @@ if errorlevel 1 (
   goto :failed
 )
 
-if not exist ".env.local" if not exist ".env" if not exist "backend\.env" (
+if not exist "backend\.env" (
   echo Missing database environment configuration.
-  echo Run neon env pull from the project root, or copy backend\.env.example to backend\.env and set DATABASE_URL.
+  echo Copy backend\.env.example to backend\.env and set DATABASE_URL to your local PostgreSQL connection.
   goto :failed
 )
 

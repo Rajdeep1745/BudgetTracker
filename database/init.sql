@@ -13,25 +13,51 @@ CREATE TABLE monthly_budgets (
   month DATE NOT NULL CHECK (date_trunc('month', month) = month),
   total_amount NUMERIC(12,2) NOT NULL CHECK (total_amount >= 0),
   personal_percent NUMERIC(5,2) NOT NULL CHECK (personal_percent >= 0 AND personal_percent <= 100),
-  rent NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (rent >= 0),
-  didi_fees NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (didi_fees >= 0),
   carry_in NUMERIC(12,2) NOT NULL DEFAULT 0,
+  carry_in_enabled BOOLEAN NOT NULL DEFAULT TRUE,
   savings_target NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (savings_target >= 0),
   UNIQUE(month)
 );
 
 CREATE TABLE app_settings (
   id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  total_saved NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (total_saved >= 0)
+  total_saved NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (total_saved >= 0),
+  carry_in_enabled BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-INSERT INTO app_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO app_settings (id, carry_in_enabled)
+VALUES (1, TRUE)
+ON CONFLICT (id) DO NOTHING;
 
-ALTER TABLE monthly_budgets
-  ADD COLUMN IF NOT EXISTS rent NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (rent >= 0),
-  ADD COLUMN IF NOT EXISTS didi_fees NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (didi_fees >= 0),
-  ADD COLUMN IF NOT EXISTS carry_in NUMERIC(12,2) NOT NULL DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS savings_target NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (savings_target >= 0);
+CREATE TABLE budget_fixed_cost_types (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  created_month DATE NOT NULL DEFAULT date_trunc('month', CURRENT_DATE)::date
+    CHECK (date_trunc('month', created_month) = created_month),
+  archived_month DATE
+    CHECK (archived_month IS NULL OR date_trunc('month', archived_month) = archived_month)
+);
+
+CREATE UNIQUE INDEX budget_fixed_cost_types_active_name_idx
+  ON budget_fixed_cost_types (lower(name))
+  WHERE archived_month IS NULL;
+
+CREATE TABLE monthly_budget_fixed_costs (
+  monthly_budget_id UUID NOT NULL
+    REFERENCES monthly_budgets(id) ON DELETE CASCADE,
+  fixed_cost_type_id UUID NOT NULL
+    REFERENCES budget_fixed_cost_types(id) ON DELETE RESTRICT,
+  name_snapshot TEXT NOT NULL,
+  amount NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (amount >= 0),
+  PRIMARY KEY (monthly_budget_id, fixed_cost_type_id)
+);
+
+CREATE INDEX monthly_budget_fixed_costs_type_idx
+  ON monthly_budget_fixed_costs (fixed_cost_type_id, monthly_budget_id);
+
+INSERT INTO budget_fixed_cost_types (id, name, created_month) VALUES
+  ('00000000-0000-4000-8000-000000000001', 'Rent', DATE '0001-01-01'),
+  ('00000000-0000-4000-8000-000000000002', 'Didi fees', DATE '0001-01-01');
 
 CREATE TABLE transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

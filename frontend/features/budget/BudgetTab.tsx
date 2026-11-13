@@ -5,7 +5,11 @@ import { Check, ShoppingBasket, Wallet } from "lucide-react";
 import GroupCard from "../../components/GroupCard";
 import MoneyField from "../../components/MoneyField";
 import SplitPreview from "../../components/SplitPreview";
-import type { BudgetGroup, GroupName } from "../../types";
+import type {
+  BudgetFixedCostInput,
+  BudgetGroup,
+  GroupName,
+} from "../../types";
 import { monthLabel } from "../../lib/format";
 
 export default function BudgetTab({
@@ -13,19 +17,17 @@ export default function BudgetTab({
   currency,
   allowanceInput,
   setAllowanceInput,
-  rentInput,
-  setRentInput,
-  didiFeesInput,
-  setDidiFeesInput,
+  fixedCosts,
+  onFixedCostChange,
   carryInInput,
   setCarryInInput,
+  carryInEnabled,
   alreadySavedInput,
   setAlreadySavedInput,
   savingsTargetInput,
   setSavingsTargetInput,
   personalPercent,
   setPersonalPercent,
-  budgetSaved,
   groups,
   formatMoney,
   onSave,
@@ -34,28 +36,29 @@ export default function BudgetTab({
   currency: string;
   allowanceInput: string;
   setAllowanceInput: (value: string) => void;
-  rentInput: string;
-  setRentInput: (value: string) => void;
-  didiFeesInput: string;
-  setDidiFeesInput: (value: string) => void;
+  fixedCosts: BudgetFixedCostInput[];
+  onFixedCostChange: (id: string, value: string) => void;
   carryInInput: string;
   setCarryInInput: (value: string) => void;
+  carryInEnabled: boolean;
   alreadySavedInput: string;
   setAlreadySavedInput: (value: string) => void;
   savingsTargetInput: string;
   setSavingsTargetInput: (value: string) => void;
   personalPercent: number;
   setPersonalPercent: (value: number) => void;
-  budgetSaved: boolean;
   groups: BudgetGroup[];
   formatMoney: (value: number) => string;
   onSave: (event: FormEvent) => void;
 }) {
+  const fixedCostTotal = fixedCosts.reduce(
+    (total, cost) => total + (Number(cost.amount) || 0),
+    0,
+  );
   const effectiveAllowance =
     (Number(allowanceInput) || 0) -
-    (Number(rentInput) || 0) -
-    (Number(didiFeesInput) || 0) +
-    (Number(carryInInput) || 0);
+    fixedCostTotal +
+    (carryInEnabled ? Number(carryInInput) || 0 : 0);
   const spendableBudget =
     effectiveAllowance - (Number(savingsTargetInput) || 0);
   const percent = (value: number, total: number) =>
@@ -97,31 +100,48 @@ export default function BudgetTab({
                 placeholder="Enter your monthly allowance"
               />
             </div>
-            <div className="budget-input-grid">
-              <MoneyField
-                id="rent"
-                label="Rent"
-                value={rentInput}
-                onChange={setRentInput}
-                currency={currency}
-              />
-              <MoneyField
-                id="didi-fees"
-                label="Didi fees"
-                value={didiFeesInput}
-                onChange={setDidiFeesInput}
-                currency={currency}
-              />
-              <MoneyField
-                id="carry-in"
-                label="Carry in"
-                hint="Can be negative"
-                value={carryInInput}
-                onChange={setCarryInInput}
-                currency={currency}
-                allowNegative
-              />
-            </div>
+
+            <section
+              className="fixed-cost-input-section"
+              aria-labelledby="fixed-cost-input-heading"
+            >
+              <div className="fixed-cost-input-heading">
+                <h3 id="fixed-cost-input-heading">Fixed costs</h3>
+                <p>Deducted from your monthly allowance.</p>
+              </div>
+              {fixedCosts.length > 0 ? (
+                <div className="budget-input-grid fixed-cost-input-grid">
+                  {fixedCosts.map((cost) => (
+                    <MoneyField
+                      key={cost.id}
+                      id={`fixed-cost-${cost.id}`}
+                      label={cost.name}
+                      value={cost.amount}
+                      onChange={(value) => onFixedCostChange(cost.id, value)}
+                      currency={currency}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="fixed-cost-empty">
+                  Add fixed costs in Settings to deduct them from your budget.
+                </p>
+              )}
+            </section>
+
+            {carryInEnabled && (
+              <div className="carry-in-input">
+                <MoneyField
+                  id="carry-in"
+                  label="Carry in"
+                  value={carryInInput}
+                  onChange={setCarryInInput}
+                  currency={currency}
+                  allowNegative
+                />
+              </div>
+            )}
+
             <section className="savings-panel" aria-labelledby="savings-heading">
               <div className="savings-heading">
                 <span className="large-icon green-icon">
@@ -143,7 +163,6 @@ export default function BudgetTab({
                 <MoneyField
                   id="monthly-savings"
                   label="Save this month"
-                  hint="Deducted before allocation"
                   value={savingsTargetInput}
                   onChange={setSavingsTargetInput}
                   currency={currency}
@@ -151,12 +170,16 @@ export default function BudgetTab({
               </div>
             </section>
           </div>
+
           <div className="budget-allocation-panel">
             <div className="calculation-summary">
               <div>
                 <span>Effective allowance</span>
                 <strong>{formatMoney(effectiveAllowance)}</strong>
-                <small>Allowance − rent − Didi fees + carry in</small>
+                <small>
+                  Allowance − fixed costs
+                  {carryInEnabled ? " + carry in" : ""}
+                </small>
               </div>
               <div className="spendable-summary">
                 <span>Spendable budget</span>
@@ -185,7 +208,9 @@ export default function BudgetTab({
               min="0"
               max="100"
               value={personalPercent}
-              onChange={(event) => setPersonalPercent(Number(event.target.value))}
+              onChange={(event) =>
+                setPersonalPercent(Number(event.target.value))
+              }
             />
             <div className="split-preview">
               <SplitPreview
@@ -225,11 +250,6 @@ export default function BudgetTab({
             <button className="primary-button save-budget-button" type="submit">
               <Check size={17} /> Save budget
             </button>
-            {budgetSaved && (
-              <p className="success-message">
-                <Check size={15} /> Budget saved for {monthLabel(month)}.
-              </p>
-            )}
           </div>
         </div>
       </form>
