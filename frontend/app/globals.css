@@ -663,7 +663,7 @@ button {
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
 }
-.group-tag.grocery {
+.group-tag.household {
   background: var(--color-highlight);
   color: var(--color-accent);
 }
@@ -1319,8 +1319,8 @@ button {
   border-color: var(--color-highlight);
   background: var(--color-highlight);
 }
-.cumulative-tile.grocery,
-.daily-allowance-tile.grocery {
+.cumulative-tile.household,
+.daily-allowance-tile.household {
   border-color: var(--color-success-soft);
   background: var(--color-success-soft);
 }
@@ -1341,7 +1341,7 @@ button {
 .daily-allowance-tile.personal > span {
   color: var(--color-primary);
 }
-.daily-allowance-tile.grocery > span {
+.daily-allowance-tile.household > span {
   color: var(--color-accent);
 }
 .daily-allowance-tile > strong {
@@ -1387,7 +1387,7 @@ button {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
 }
-.top-spends-list.grocery .top-spend-rank {
+.top-spends-list.household .top-spend-rank {
   color: var(--color-accent);
 }
 .top-spend-copy {

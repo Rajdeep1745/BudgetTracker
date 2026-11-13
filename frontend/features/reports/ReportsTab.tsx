@@ -49,7 +49,7 @@ export default function ReportsTab({
   const topCategories = [...(data?.categories ?? [])]
     .filter((category) => category.spent > 0)
     .sort((a, b) => b.spent - a.spent);
-  const topCategoriesByGroup = (["Personal", "Grocery"] as const).map(
+  const topCategoriesByGroup = (["Personal", "Household"] as const).map(
     (name) => ({
       name,
       categories: topCategories
@@ -60,7 +60,7 @@ export default function ReportsTab({
 
   const cumulativeByGroup = useMemo(
     () =>
-      (["Personal", "Grocery"] as const).map((name) => {
+      (["Personal", "Household"] as const).map((name) => {
         const group = data?.groups.find((entry) => entry.name === name);
         const entries = (data?.groupDaily ?? []).filter(
           (entry) => entry.group_name === name,
@@ -91,7 +91,7 @@ export default function ReportsTab({
 
   const groupPaceCharts = useMemo(
     () =>
-      (["Personal", "Grocery"] as const).map((name) => {
+      (["Personal", "Household"] as const).map((name) => {
         const group = data?.groups.find((entry) => entry.name === name);
         const now = new Date();
         const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;

@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE,
-  group_name TEXT NOT NULL CHECK (group_name IN ('Personal', 'Grocery')),
+  group_name TEXT NOT NULL CHECK (group_name IN ('Personal', 'Household')),
   color TEXT NOT NULL DEFAULT '#3b82f6',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -78,16 +78,16 @@ CREATE INDEX transactions_amount_idx ON transactions(amount);
 
 INSERT INTO categories (name, group_name, color) VALUES
   ('Food', 'Personal', '#8b5cf6'),
-  ('Vegetables', 'Grocery', '#22c55e'),
-  ('Meat', 'Grocery', '#14b8a6'),
-  ('Fish', 'Grocery', '#0ea5e9'),
-  ('Groceries', 'Grocery', '#10b981'),
+  ('Vegetables', 'Household', '#22c55e'),
+  ('Meat', 'Household', '#14b8a6'),
+  ('Fish', 'Household', '#0ea5e9'),
+  ('Groceries', 'Household', '#10b981'),
   ('Transportation', 'Personal', '#f97316'),
   ('Medical', 'Personal', '#ef4444'),
   ('Entertainment', 'Personal', '#a855f7'),
   ('Shopping', 'Personal', '#ec4899'),
   ('Education', 'Personal', '#6366f1'),
-  ('Bills', 'Grocery', '#64748b'),
+  ('Bills', 'Household', '#64748b'),
   ('Gifts', 'Personal', '#f59e0b'),
   ('Miscellaneous', 'Personal', '#78716c')
 ON CONFLICT (name) DO UPDATE SET

@@ -131,7 +131,9 @@ export default function DashboardTab({
   const percent = (value: number, total: number) =>
     total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   const personalGroup = data?.groups.find((group) => group.name === "Personal");
-  const groceryGroup = data?.groups.find((group) => group.name === "Grocery");
+  const householdGroup = data?.groups.find(
+    (group) => group.name === "Household",
+  );
   const groups = [
     {
       name: "Personal" as const,
@@ -140,8 +142,8 @@ export default function DashboardTab({
       icon: <Wallet size={18} />,
     },
     {
-      name: "Grocery" as const,
-      group: groceryGroup,
+      name: "Household" as const,
+      group: householdGroup,
       color: "var(--color-accent)",
       icon: <ShoppingBasket size={18} />,
     },
@@ -175,11 +177,6 @@ export default function DashboardTab({
             dailyPace.daysElapsed
               ? `${formatMoney(Math.abs(dailyPace.difference))}/day`
               : "—"
-          }
-          detail={
-            dailyPace.daysElapsed
-              ? `${dailyPace.difference === 0 ? "On" : dailyPace.difference > 0 ? "Under" : "Over"} pace · avg ${formatMoney(dailyPace.averageDailySpend)} / ideal ${formatMoney(dailyPace.idealDailySpend)}`
-              : "Starts when the selected month begins"
           }
           tone={dailyPace.difference >= 0 ? "green" : "rose"}
         />

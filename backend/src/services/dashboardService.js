@@ -74,7 +74,7 @@ export async function getDashboard(month) {
     }),
     {},
   );
-  const groups = ["Personal", "Grocery"].map((name) => {
+  const groups = ["Personal", "Household"].map((name) => {
     const groupBudget =
       name === "Personal"
         ? (allocationBase * personalPercent) / 100

@@ -211,7 +211,7 @@ export default function SettingsTab({
               }
             >
               <option value="Personal">Personal</option>
-              <option value="Grocery">Grocery</option>
+              <option value="Household">Household</option>
             </select>
           </label>
           <button className="primary-button" type="submit">
@@ -227,7 +227,7 @@ export default function SettingsTab({
         <div>
           <h2>About your budget</h2>
           <p>
-            Fixed costs are deducted before Personal and Grocery allocations.
+            Fixed costs are deducted before Personal and Household allocations.
             Carry in is added only when enabled. Categories organize
             transactions and reports; they do not have individual budget limits.
           </p>

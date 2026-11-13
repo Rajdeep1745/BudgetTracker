@@ -30,15 +30,16 @@ For a fresh local database, run `database/init.sql`. To upgrade an existing loca
 1. `database/V1__budget_plan.sql`
 2. `database/V2__flexible_budget_costs.sql`
 3. `database/V3__transaction_browsing.sql`
+4. `database/V4__household_group.sql`
 
-The migration scripts are safe to rerun. V2 depends on the budget columns introduced by V1; V3 adds indexes for the existing transactions table.
+The migration scripts are safe to rerun. V2 depends on the budget columns introduced by V1; V3 adds indexes for the existing transactions table; V4 renames the Grocery group to Household without changing category IDs or transaction references.
 
 ## 1. Create the production database
 
 1. Create a PostgreSQL project on Neon.
 2. Copy the pooled connection string from the Neon console. Keep it secret.
 3. For a new, empty database, run `database/init.sql` using Neon's SQL Editor.
-4. For an existing PocketPlan database, back it up and run the applicable versioned migrations instead of `init.sql`, before deploying the updated API. Run `V1`, `V2`, and `V3` in order when upgrading from the original schema. V1 adds budget plan fields, V2 converts Rent and Didi fees into configurable fixed costs and adds the carry-in toggle while preserving saved amounts and past-month values, and V3 adds transaction indexes. If a migration version is already present in the database, do not rerun it solely because a new app version was deployed.
+4. For an existing PocketPlan database, back it up and run the applicable versioned migrations instead of `init.sql`, before deploying the updated API. Run `V1` through `V4` in order when upgrading from the original schema. V1 adds budget plan fields, V2 converts Rent and Didi fees into configurable fixed costs and adds the carry-in toggle while preserving saved amounts and past-month values, V3 adds transaction indexes, and V4 renames the Grocery group to Household without changing category IDs or transaction references. If a migration version is already present in the database, do not rerun it solely because a new app version was deployed.
 
 The hosting setup does not copy an existing local database into Neon. Export/import your current database separately if you need to keep its transactions and budget data.
 

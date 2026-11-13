@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 
-export type GroupName = "Personal" | "Grocery";
+export type GroupName = "Personal" | "Household";
 
 export type Category = {
   id: string;

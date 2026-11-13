@@ -67,7 +67,7 @@ export default function BudgetTab({
     groups.find((group) => group.name === name);
   const groupCards = [
     { name: "Personal" as const, color: "var(--color-primary)" },
-    { name: "Grocery" as const, color: "var(--color-accent)" },
+    { name: "Household" as const, color: "var(--color-accent)" },
   ];
 
   return (
@@ -221,7 +221,7 @@ export default function BudgetTab({
                 formatMoney={formatMoney}
               />
               <SplitPreview
-                name="Grocery"
+                name="Household"
                 percent={100 - personalPercent}
                 amount={
                   (Math.max(spendableBudget, 0) * (100 - personalPercent)) / 100
@@ -232,7 +232,7 @@ export default function BudgetTab({
             </div>
             <div
               className="split-bar"
-              aria-label={`${personalPercent}% Personal, ${100 - personalPercent}% Grocery`}
+              aria-label={`${personalPercent}% Personal, ${100 - personalPercent}% Household`}
             >
               <span
                 style={{

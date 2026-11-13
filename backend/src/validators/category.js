@@ -2,5 +2,5 @@ import { z } from "zod";
 
 export const categorySchema = z.object({
   name: z.string().trim().min(1).max(60),
-  groupName: z.enum(["Personal", "Grocery"]),
+  groupName: z.enum(["Personal", "Household"]),
 });
