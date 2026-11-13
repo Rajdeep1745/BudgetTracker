@@ -26,13 +26,13 @@ if not exist "node_modules" (
   if errorlevel 1 goto :failed
 )
 
-set "PORT=3101"
-set "CORS_ORIGIN=http://localhost:3100"
-set "NEXT_PUBLIC_API_URL=http://localhost:3101/api"
+set "PORT=5000"
+set "CORS_ORIGIN=http://localhost:3000"
+set "NEXT_PUBLIC_API_URL=http://localhost:5000/api"
 
 echo Starting Budget Tracker...
-echo Frontend: http://localhost:3100
-echo Backend:  http://localhost:3101
+echo Frontend: http://localhost:3000
+echo Backend:  http://localhost:5000
 echo Keep this window open. Press Ctrl+C to stop both services.
 call npm run dev
 goto :end

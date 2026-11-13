@@ -44,6 +44,11 @@ CREATE TABLE transactions (
 
 CREATE INDEX transactions_date_idx ON transactions(transaction_date);
 CREATE INDEX transactions_category_idx ON transactions(category_id);
+CREATE INDEX transactions_recent_idx
+  ON transactions(transaction_date DESC, created_at DESC, id DESC);
+CREATE INDEX transactions_category_recent_idx
+  ON transactions(category_id, transaction_date DESC, created_at DESC, id DESC);
+CREATE INDEX transactions_amount_idx ON transactions(amount);
 
 INSERT INTO categories (name, group_name, color) VALUES
   ('Food', 'Personal', '#8b5cf6'),

@@ -26,9 +26,11 @@ Do not upload `.env` files, passwords, database URLs, or other credentials. The 
 1. Create a PostgreSQL project on Neon.
 2. Copy the pooled connection string from the Neon console. Keep it secret.
 3. For a new, empty database, run `database/init.sql` using Neon's SQL Editor.
-4. For an existing PocketPlan database, run `database/migrate-budget-plan.sql` instead of `init.sql`, after backing up the existing database.
+4. For an existing PocketPlan database, back it up and run the migration files it needs instead of `init.sql`. Run `database/migrate-budget-plan.sql` only if the existing database is missing those budget columns/settings, then run `database/migrate-transaction-browsing.sql` to add the transaction-list indexes. The latter only adds indexes; it does not change or delete transaction, category, or budget data.
 
 The hosting setup does not copy an existing local database into Neon. Export/import your current database separately if you need to keep its transactions and budget data.
+
+Pushing code to GitHub redeploys the Vercel frontend and Render API, but it does **not** apply SQL to Neon. Run each required migration manually against the production database, after taking a backup. For Neon migrations, use the direct (non-pooled) database connection; the hostname should not contain `-pooler`. These recent/category/amount indexes are also included in `database/init.sql` for fresh installations.
 
 ## 2. Deploy the API on Render
 
@@ -37,7 +39,7 @@ The hosting setup does not copy an existing local database into Neon. Export/imp
    - `DATABASE_URL` — the Neon connection string, including its SSL query parameters.
    - `CORS_ORIGIN` — the exact public Vercel origin, for example `https://your-project.vercel.app` (no trailing slash). Multiple comma-separated origins are supported.
 
-   If you have not created the Vercel project yet, temporarily set `CORS_ORIGIN` to `http://localhost:3100`; replace it with the Vercel production origin and redeploy the API after step 3.
+   If you have not created the Vercel project yet, temporarily set `CORS_ORIGIN` to `http://localhost:3000`; replace it with the Vercel production origin and redeploy the API after step 3.
 3. Deploy and wait for the service to become healthy. Its health endpoint is `https://YOUR-API.onrender.com/api/health` and should return `{"ok":true}`. To confirm the API can also reach Neon, open `https://YOUR-API.onrender.com/api/categories`; it should return the category list.
 
 Render provides `PORT` automatically. Do not set it to the local development port.

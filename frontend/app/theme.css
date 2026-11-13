@@ -1,0 +1,43 @@
+:root {
+  --color-deep-purple: #290044;
+  --color-primary: #500071;
+  --color-accent: #8a2a78;
+  --color-highlight: #fff0b8e3;
+
+  --color-background: #f9fafb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3f4f6;
+  --color-surface-overlay: rgba(255, 255, 255, 0.96);
+  --color-border: #e5e7eb;
+  --color-text-secondary: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-success: #15803d;
+  --color-success-soft: #dcfce7;
+  --color-danger: #b91c1c;
+  --color-danger-soft: #fee2e2;
+  --color-warning: #92400e;
+  --color-warning-soft: #fef3c7;
+  --color-modal-backdrop: rgba(0, 0, 0, 0.5);
+  --color-transparent: transparent;
+  --color-shadow: rgba(41, 0, 68, 0.08);
+
+  --font-family-sans: Arial, Helvetica, sans-serif;
+  --font-family-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-copy: 1.5;
+  --line-height-relaxed: 1.6;
+  --letter-spacing-brand: -0.7px;
+  --letter-spacing-stat: -0.45px;
+  --letter-spacing-label: 1.15px;
+}
