@@ -11,6 +11,8 @@ The app has four tabs:
 
 The supplied categories are Food, Vegetables, Meat, Fish, Groceries, Transportation, Medical, Entertainment, Shopping, Education, Bills, Gifts, and Miscellaneous. Household includes Vegetables, Meat, Fish, Groceries, and Bills; all other categories are Personal. These allocations remain part of the budget calculation, but are not shown beside categories in transaction lists.
 
+Expenses added for the same category and date are combined into one transaction: amounts are summed and nonempty descriptions are joined with commas. Apply `database/V5__daily_category_transactions.sql` to consolidate existing data and enforce one row per category/date; see the backup and rollout steps in [DEPLOYMENT.md](./DEPLOYMENT.md). Editing into an occupied category/date returns a conflict; edit the existing daily transaction instead.
+
 ## Start locally
 
 1. Copy `backend/.env.example` to `backend/.env` and set `DATABASE_URL` to your local PostgreSQL instance (normally `localhost:5432`). Local development only accepts a database on this machine; the backend does not load the root `.env.local` used for production credentials. Environment variables supplied by the hosting platform take precedence.

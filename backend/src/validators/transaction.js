@@ -7,6 +7,11 @@ export const transactionSchema = z.object({
   transactionDate: z.string().date(),
 });
 
+// Daily merges can legitimately exceed the limit for a single new entry.
+export const transactionUpdateSchema = transactionSchema.extend({
+  description: z.string().trim().optional().default(""),
+});
+
 export const transactionQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).default(1),

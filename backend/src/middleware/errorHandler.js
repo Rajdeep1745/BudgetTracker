@@ -14,10 +14,10 @@ export function errorHandler(error, _, res, __) {
   res.status(status).json({
     error: isValidationError
       ? error.issues[0].message
-      : isDuplicate
-        ? duplicateMessage
-        : error.statusCode
-          ? error.message
+      : error.statusCode
+        ? error.message
+        : isDuplicate
+          ? duplicateMessage
           : "Server error",
   });
 }

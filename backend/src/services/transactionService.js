@@ -22,8 +22,7 @@ export async function listTransactions(month, filters) {
   }
   if (filters.categoryId)
     addCondition("t.category_id = ?::uuid", filters.categoryId);
-  if (filters.from)
-    addCondition("t.transaction_date >= ?::date", filters.from);
+  if (filters.from) addCondition("t.transaction_date >= ?::date", filters.from);
   if (filters.to) addCondition("t.transaction_date <= ?::date", filters.to);
 
   const where = conditions.join(" AND ");
@@ -63,38 +62,94 @@ export async function listTransactions(month, filters) {
 }
 
 export async function createTransaction(transaction) {
-  const result = await pool.query(
-    `INSERT INTO transactions
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    // Serialize additions even when no transaction exists for this date yet.
+    await client.query("SELECT id FROM categories WHERE id = $1 FOR UPDATE", [
+      transaction.categoryId,
+    ]);
+    const existing = await client.query(
+      `SELECT id FROM transactions
+       WHERE category_id = $1 AND transaction_date = $2::date
+       ORDER BY created_at, id
+       FOR UPDATE`,
+      [transaction.categoryId, transaction.transactionDate],
+    );
+    let result;
+    if (existing.rows.length > 0) {
+      const ids = existing.rows.map((row) => row.id);
+      result = await client.query(
+        `UPDATE transactions SET
+           amount = (SELECT SUM(amount) FROM transactions WHERE id = ANY($2::uuid[])) + $3::numeric,
+           description = concat_ws(', ',
+             (SELECT string_agg(NULLIF(btrim(description), ''), ', ' ORDER BY created_at, id)
+              FROM transactions WHERE id = ANY($2::uuid[])),
+             NULLIF(btrim($4::text), ''))
+         WHERE id = $1
+         RETURNING id, category_id, description, amount,
+                   transaction_date::text AS transaction_date, created_at`,
+        [ids[0], ids, transaction.amount, transaction.description],
+      );
+      if (ids.length > 1) {
+        await client.query(
+          "DELETE FROM transactions WHERE id = ANY($1::uuid[])",
+          [ids.slice(1)],
+        );
+      }
+    } else {
+      result = await client.query(
+        `INSERT INTO transactions
        (category_id, description, amount, transaction_date)
      VALUES ($1, $2, $3, $4)
      RETURNING id, category_id, description, amount,
                transaction_date::text AS transaction_date, created_at`,
-    [
-      transaction.categoryId,
-      transaction.description,
-      transaction.amount,
-      transaction.transactionDate,
-    ],
-  );
-  return result.rows[0];
+        [
+          transaction.categoryId,
+          transaction.description,
+          transaction.amount,
+          transaction.transactionDate,
+        ],
+      );
+    }
+    await client.query("COMMIT");
+    return result.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function updateTransaction(id, transaction) {
-  const result = await pool.query(
-    `UPDATE transactions
+  try {
+    const result = await pool.query(
+      `UPDATE transactions
      SET category_id = $1, description = $2, amount = $3, transaction_date = $4
      WHERE id = $5
      RETURNING id, category_id, description, amount,
                transaction_date::text AS transaction_date, created_at`,
-    [
-      transaction.categoryId,
-      transaction.description,
-      transaction.amount,
-      transaction.transactionDate,
-      id,
-    ],
-  );
-  return result.rows[0];
+      [
+        transaction.categoryId,
+        transaction.description,
+        transaction.amount,
+        transaction.transactionDate,
+        id,
+      ],
+    );
+    return result.rows[0];
+  } catch (error) {
+    if (
+      error.code === "23505" &&
+      error.constraint === "transactions_category_date_uidx"
+    ) {
+      error.statusCode = 409;
+      error.message =
+        "A transaction already exists for this category and date. Edit that transaction or choose a different category or date.";
+    }
+    throw error;
+  }
 }
 
 export async function deleteTransaction(id) {

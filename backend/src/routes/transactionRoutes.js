@@ -10,6 +10,7 @@ import { monthSchema } from "../validators/budget.js";
 import {
   transactionQuerySchema,
   transactionSchema,
+  transactionUpdateSchema,
 } from "../validators/transaction.js";
 
 const router = Router();
@@ -38,7 +39,7 @@ router.post("/", async (req, res, next) => {
 router.put("/:id", async (req, res, next) => {
   try {
     const id = z.string().uuid().parse(req.params.id);
-    const transaction = transactionSchema.parse(req.body);
+    const transaction = transactionUpdateSchema.parse(req.body);
     const updated = await updateTransaction(id, transaction);
     if (!updated)
       return res.status(404).json({ error: "Transaction not found." });

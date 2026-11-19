@@ -76,6 +76,9 @@ CREATE INDEX transactions_category_recent_idx
   ON transactions(category_id, transaction_date DESC, created_at DESC, id DESC);
 CREATE INDEX transactions_amount_idx ON transactions(amount);
 
+CREATE UNIQUE INDEX transactions_category_date_uidx
+  ON transactions(category_id, transaction_date);
+
 INSERT INTO categories (name, group_name, color) VALUES
   ('Food', 'Personal', '#8b5cf6'),
   ('Vegetables', 'Household', '#22c55e'),
