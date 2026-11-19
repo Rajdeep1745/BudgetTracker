@@ -6,6 +6,13 @@ import { ToastProvider } from "../components/ToastProvider";
 export const metadata: Metadata = {
   title: "PocketPlan Budget Tracker",
   description: "Monthly budget dashboard",
+  icons: {
+    icon: {
+      url: "/logo/pocketplan-mark.svg",
+      type: "image/svg+xml",
+      sizes: "any",
+    },
+  },
 };
 export default function Layout({
   children,

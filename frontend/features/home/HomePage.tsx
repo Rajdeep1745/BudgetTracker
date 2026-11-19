@@ -18,6 +18,7 @@ import { apiRequest } from "../../lib/api";
 import { localToday } from "../../lib/format";
 import { openPickerFromLabel } from "../../lib/openPickerFromLabel";
 import { useToast } from "../../components/ToastProvider";
+import BrandLogo from "../../components/BrandLogo";
 import type {
   BudgetFixedCostInput,
   DashboardData,
@@ -49,16 +50,15 @@ const navItems: { name: Tab; icon: typeof LayoutDashboard }[] = [
 export default function HomePage() {
   const [month, setMonth] = useState(currentMonth);
   const [tab, setTab] = useState<Tab>("Dashboard");
-  const [selectedReportDay, setSelectedReportDay] = useState(
-    () => Number(localToday().slice(-2)),
+  const [selectedReportDay, setSelectedReportDay] = useState(() =>
+    Number(localToday().slice(-2)),
   );
   const [data, setData] = useState<DashboardData>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [transactionTotal, setTransactionTotal] = useState(0);
   const [transactionPage, setTransactionPage] = useState(1);
-  const [transactionFilters, setTransactionFilters] = useState<TransactionFilters>(
-    emptyTransactionFilters,
-  );
+  const [transactionFilters, setTransactionFilters] =
+    useState<TransactionFilters>(emptyTransactionFilters);
   const [transactionSort, setTransactionSort] = useState<TransactionSort>({
     sortBy: "date",
     sortDirection: "desc",
@@ -80,7 +80,8 @@ export default function HomePage() {
   const [settingsCarryInEnabled, setSettingsCarryInEnabled] = useState(true);
   const [isSavingCarryIn, setIsSavingCarryIn] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryGroup, setNewCategoryGroup] = useState<GroupName>("Personal");
+  const [newCategoryGroup, setNewCategoryGroup] =
+    useState<GroupName>("Personal");
   const [form, setForm] = useState<TransactionFormValues>({
     categoryId: "",
     description: "",
@@ -180,7 +181,9 @@ export default function HomePage() {
         setTransactionTotal(result.total);
       } catch (error) {
         showToast(
-          error instanceof Error ? error.message : "Could not load transactions.",
+          error instanceof Error
+            ? error.message
+            : "Could not load transactions.",
           "error",
         );
       }
@@ -211,18 +214,25 @@ export default function HomePage() {
   useEffect(() => {
     const now = new Date();
     const isCurrentMonth =
-      month === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      month ===
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     setSelectedReportDay(
       isCurrentMonth
         ? now.getDate()
-        : new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate(),
+        : new Date(
+            Number(month.slice(0, 4)),
+            Number(month.slice(5)),
+            0,
+          ).getDate(),
     );
     setTransactionPage(1);
   }, [month]);
 
   useEffect(() => {
     const savedCurrency = window.localStorage.getItem("pocketplan.currency");
-    const savedThreshold = window.localStorage.getItem("pocketplan.alertThreshold");
+    const savedThreshold = window.localStorage.getItem(
+      "pocketplan.alertThreshold",
+    );
     if (savedCurrency) setCurrency(savedCurrency);
     if (savedThreshold) setAlertThreshold(Number(savedThreshold));
   }, []);
@@ -246,7 +256,9 @@ export default function HomePage() {
       showToast("Transaction added.");
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : "Could not save this transaction.",
+        error instanceof Error
+          ? error.message
+          : "Could not save this transaction.",
         "error",
       );
     }
@@ -267,8 +279,7 @@ export default function HomePage() {
             amount: Number(cost.amount),
           })),
           carryIn: Number(carryInInput),
-          carryInEnabled:
-            data?.budget.carryInEnabled ?? settingsCarryInEnabled,
+          carryInEnabled: data?.budget.carryInEnabled ?? settingsCarryInEnabled,
           alreadySaved: Number(alreadySavedInput),
           savingsTarget: Number(savingsTargetInput),
         }),
@@ -277,7 +288,9 @@ export default function HomePage() {
       showToast("Budget saved.");
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : "Could not update this budget.",
+        error instanceof Error
+          ? error.message
+          : "Could not update this budget.",
         "error",
       );
     }
@@ -360,7 +373,9 @@ export default function HomePage() {
       showToast("Fixed cost added.");
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : "Could not add this fixed cost.",
+        error instanceof Error
+          ? error.message
+          : "Could not add this fixed cost.",
         "error",
       );
     }
@@ -368,10 +383,9 @@ export default function HomePage() {
 
   const deleteFixedCost = async (id: string) => {
     try {
-      await apiRequest(
-        `/settings/fixed-costs/${id}?month=${currentMonth}`,
-        { method: "DELETE" },
-      );
+      await apiRequest(`/settings/fixed-costs/${id}?month=${currentMonth}`, {
+        method: "DELETE",
+      });
       await Promise.all([loadSettings(), loadDashboard()]);
       showToast("Fixed cost deleted. Past months are unchanged.");
       return true;
@@ -457,21 +471,20 @@ export default function HomePage() {
 
   const budgetAlertActive = Boolean(
     data &&
-      data.totals.budget > 0 &&
-      data.groups.some(
-        (group) =>
-          group.budget > 0 &&
-          Math.min(100, Math.round((group.spent / group.budget) * 100)) >=
-            alertThreshold,
-      ),
+    data.totals.budget > 0 &&
+    data.groups.some(
+      (group) =>
+        group.budget > 0 &&
+        Math.min(100, Math.round((group.spent / group.budget) * 100)) >=
+          alertThreshold,
+    ),
   );
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <a className="brand" href="#" onClick={() => setTab("Dashboard")}>
-          <span className="brand-mark"><Wallet size={19} /></span>
-          <span>PocketPlan</span>
+          <BrandLogo />
         </a>
         <p className="nav-caption">WORKSPACE</p>
         <nav className="side-nav" aria-label="Main navigation">
@@ -489,20 +502,29 @@ export default function HomePage() {
           ))}
         </nav>
         <div className="sidebar-note">
-          <span className="note-icon"><CircleHelp size={17} /></span>
+          <span className="note-icon">
+            <CircleHelp size={17} />
+          </span>
           <p>One monthly budget, split your way.</p>
-          <button type="button" onClick={() => setTab("Budget")}>Manage budget <span>→</span></button>
+          <button type="button" onClick={() => setTab("Budget")}>
+            Manage budget <span>→</span>
+          </button>
         </div>
         <div className="sidebar-foot">
           <span className="avatar">P</span>
-          <span><strong>My finances</strong><small>Personal workspace</small></span>
+          <span>
+            <strong>My finances</strong>
+            <small>Personal workspace</small>
+          </span>
           <ChevronDown size={16} />
         </div>
       </aside>
 
       <main className="main-area">
         <header className="topbar">
-          <div className="mobile-brand"><span className="brand-mark"><Wallet size={18} /></span> PocketPlan</div>
+          <div className="mobile-brand">
+            <BrandLogo />
+          </div>
           <label className="month-picker" onClick={openPickerFromLabel}>
             <CalendarDays size={16} />
             <input
@@ -596,8 +618,14 @@ export default function HomePage() {
       </main>
       <nav className="mobile-nav" aria-label="Mobile navigation">
         {navItems.map(({ name, icon: Icon }) => (
-          <button className={tab === name ? "active" : ""} key={name} onClick={() => setTab(name)} type="button">
-            <Icon size={19} /><span>{name}</span>
+          <button
+            className={tab === name ? "active" : ""}
+            key={name}
+            onClick={() => setTab(name)}
+            type="button"
+          >
+            <Icon size={19} />
+            <span>{name}</span>
           </button>
         ))}
       </nav>
